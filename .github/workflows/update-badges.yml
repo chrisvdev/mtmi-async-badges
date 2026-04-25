@@ -1,0 +1,43 @@
+name: Update Twitch Badges
+
+on:
+  # Se ejecuta cada semana los lunes a las 00:00 UTC
+  schedule:
+    - cron: '0 0 * * 1'
+  
+  # Permite ejecutar manualmente desde GitHub Actions
+  workflow_dispatch:
+
+# Permisos necesarios para hacer commit y push
+permissions:
+  contents: write
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+      
+      - name: Update badges
+        run: pnpm update-badges
+      
+      - name: Commit and push if changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: '🎖️ Update Twitch badges'
+          commit_user_name: 'github-actions[bot]'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
+          file_pattern: 'badges/*.json'
