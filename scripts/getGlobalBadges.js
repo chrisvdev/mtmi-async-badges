@@ -135,11 +135,14 @@ try {
 
   const transformedResponse = transformResponse(APIData);
   console.log(`✔ Transformed ${transformedResponse.length} entries.`);
+  const badgesList = []
 
   for (const badge of transformedResponse) {
     await saveToFS(badge);
+    badgesList.push(badge.text);
     console.log(`✔ Saved ${badge.text} to badges/${badge.text.split("/").join("_")}.json`);
   }
+  saveToFS({ text: "list", image: "", description: "Lista de badges disponibles", value: 0, badges: badgesList });
 } catch (err) {
   console.error("✖ Error:", err.message);
   process.exit(1);
