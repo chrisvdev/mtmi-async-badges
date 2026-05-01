@@ -1,0 +1,76 @@
+name: Publish to NPM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+
+# Permisos necesarios
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.check.outputs.changed }}
+      version: ${{ steps.package.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Get current version
+        id: package
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+      - name: Check if version changed
+        id: check
+        run: |
+          git diff HEAD^ HEAD -- package.json > changes.txt
+          if grep -q '"version"' changes.txt; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✅ Version changed in package.json"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No version change detected"
+          fi
+  
+  publish:
+    needs: check-version
+    if: needs.check-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build package
+        run: pnpm build
+      
+      - name: Publish to npm
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Success notification
+        run: |
+          echo "🎉 Successfully published version ${{ needs.check-version.outputs.version }} to npm!"
+          echo "📦 Package: mtmi-async-badges@${{ needs.check-version.outputs.version }}"

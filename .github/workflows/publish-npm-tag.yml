@@ -1,0 +1,49 @@
+name: Publish to NPM (Tag)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# Permisos necesarios
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+      
+      - name: Get version from tag
+        id: tag
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build package
+        run: pnpm build
+      
+      - name: Publish to npm
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Success notification
+        run: |
+          echo "🎉 Successfully published version ${{ steps.tag.outputs.version }} to npm!"
+          echo "📦 Package: mtmi-async-badges@${{ steps.tag.outputs.version }}"

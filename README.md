@@ -112,7 +112,9 @@ const longSubscriber = badges.find(b =>
 mtmi-async-badges/
 ├── .github/
 │   └── workflows/
-│       └── update-badges.yml  # GitHub Action para actualización automática
+│       ├── update-badges.yml       # Actualización automática de badges
+│       ├── publish-npm.yml         # Publicación npm por cambio de versión
+│       └── publish-npm-tag.yml     # Publicación npm por tags
 ├── badges/           # Directorio con todos los badges en formato JSON
 ├── dist/             # Archivos compilados (generado por tsdown)
 ├── src/
@@ -188,37 +190,92 @@ Esto generará los archivos compilados en la carpeta `dist/`:
 
 ### 🚀 Publicar en NPM
 
-Antes de publicar, asegúrate de:
+El proyecto incluye publicación automática mediante GitHub Actions. Hay dos métodos:
 
-1. **Configurar tu cuenta de npm**:
+#### 🤖 Método 1: Publicación Automática (Recomendado)
+
+Cuando cambias la versión en `package.json` y haces push, se publica automáticamente:
+
+```bash
+# 1. Actualizar la versión
+pnpm version patch  # o minor/major
+
+# 2. Push de los cambios (esto dispara la publicación automática)
+git push && git push --tags
+```
+
+La GitHub Action detectará el cambio de versión y publicará automáticamente en npm.
+
+#### 🏷️ Método 2: Publicación por Tags
+
+Crear un tag de versión también dispara la publicación:
+
+```bash
+# Crear tag y hacer push
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+#### ⚙️ Configuración Inicial (Una sola vez)
+
+Para habilitar la publicación automática, necesitas configurar el token de npm:
+
+1. **Generar token de npm**:
+   - Ve a [npmjs.com](https://www.npmjs.com/) → Settings → Access Tokens
+   - Crea un token de tipo "Automation" o "Publish"
+   - Copia el token generado
+
+2. **Configurar en GitHub**:
+   - Ve a tu repositorio en GitHub
+   - Settings → Secrets and variables → Actions
+   - Haz clic en "New repository secret"
+   - Nombre: `NPM_TOKEN`
+   - Valor: Pega tu token de npm
+   - Guarda el secret
+
+3. **Listo**: Los próximos cambios de versión se publicarán automáticamente
+
+#### 📋 Flujo de Trabajo de Publicación
+
+```bash
+# 1. Hacer cambios en el código
+git add .
+git commit -m "✨ feat: nueva característica"
+
+# 2. Actualizar versión (esto crea un commit y tag automáticamente)
+pnpm version patch  # 1.0.0 -> 1.0.1
+# o
+pnpm version minor  # 1.0.0 -> 1.1.0
+# o
+pnpm version major  # 1.0.0 -> 2.0.0
+
+# 3. Subir cambios y tags
+git push && git push --tags
+
+# 4. GitHub Action se encarga del resto:
+#    - Instala dependencias
+#    - Compila el código
+#    - Publica en npm
+```
+
+#### 🔧 Publicación Manual (Opcional)
+
+Si prefieres publicar manualmente:
+
 ```bash
 npm login
-```
-
-2. **Actualizar la versión** (elige una):
-```bash
-# Patch (1.0.0 -> 1.0.1) - correcciones de bugs
-pnpm version patch
-
-# Minor (1.0.0 -> 1.1.0) - nuevas características
-pnpm version minor
-
-# Major (1.0.0 -> 2.0.0) - cambios que rompen compatibilidad
-pnpm version major
-```
-
-3. **Publicar el paquete**:
-```bash
-# La compilación se ejecuta automáticamente con prepublishOnly
-pnpm publish
-
-# Para primera publicación con acceso público
+pnpm build
 pnpm publish --access public
 ```
 
-4. **Verificar la publicación**:
+#### ✅ Verificar la Publicación
+
 ```bash
+# Ver información del paquete
 npm view mtmi-async-badges
+
+# Ver en npmjs.com
+# https://www.npmjs.com/package/mtmi-async-badges
 ```
 
 ## 📊 Formato de Datos
