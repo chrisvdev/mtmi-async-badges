@@ -1,0 +1,21 @@
+# Archivos de desarrollo
+src/
+scripts/
+.github/
+badges/
+tsconfig.json
+tsdown.config.ts
+
+# Archivos de control de versiones
+.git/
+.gitignore
+
+# Dependencias y cache
+node_modules/
+.pnpm-store/
+
+# Archivos de configuración local
+.vscode/
+.idea/
+*.log
+.DS_Store

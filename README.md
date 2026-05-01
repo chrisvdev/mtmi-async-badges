@@ -1,9 +1,9 @@
-# 🎖️ MTMI Badges
+# 🎖️ MTMI Async Badges
 
 <div align="center">
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
-[![npm (coming soon)](https://img.shields.io/badge/npm-coming%20soon-orange)](https://www.npmjs.com/)
+[![npm version](https://img.shields.io/npm/v/mtmi-async-badges.svg)](https://www.npmjs.com/package/mtmi-async-badges)
 
 </div>
 
@@ -29,33 +29,98 @@ La librería MTMI es una excelente herramienta para trabajar con el chat de Twit
 Los badges están disponibles en formato JSON y pueden ser descargados directamente desde:
 
 ```
-https://raw.githubusercontent.com/[usuario]/mtmi-badges/main/badges/[nombre_badge].json
+https://raw.githubusercontent.com/chrisvdev/mtmi-async-badges/main/badges/[nombre_badge].json
 ```
 
-### Paquete NPM (Próximamente)
+### Paquete NPM
 
 ```bash
-npm install mtmi-badges
+npm install mtmi-async-badges
+# o
+pnpm add mtmi-async-badges
+# o
+yarn add mtmi-async-badges
 ```
 
 ```javascript
-// Uso previsto (en desarrollo)
-import { getBadge } from 'mtmi-badges';
+import badges from 'mtmi-async-badges';
 
-const badge = await getBadge('subscriber/12');
-console.log(badge.image); // URL de la imagen del badge
+// Buscar badge por texto
+const subscriberBadge = badges.find(badge => badge.text === 'subscriber/12');
+console.log(subscriberBadge?.image); // URL de la imagen del badge
+
+// Los badges se cargan de forma asíncrona desde el CDN
+// La primera llamada iniciará la descarga, las siguientes usarán la versión cacheada
+```
+
+#### TypeScript
+
+El paquete incluye definiciones de tipos completas:
+
+```typescript
+import badges, { Badge, Badges, Predicate } from 'mtmi-async-badges';
+
+// Type-safe badge search
+const badge: Badge | undefined = badges.find((badge: Badge) => 
+  badge.text.startsWith('subscriber/')
+);
+
+if (badge) {
+  console.log(`Badge: ${badge.description}`);
+  console.log(`Image: ${badge.image}`);
+  console.log(`Value: ${badge.value}`);
+}
+```
+
+#### API
+
+**`badges.find(predicate: Predicate): Badge | undefined`**
+
+Busca un badge que cumpla con el predicado especificado. Si el badge se encuentra pero no tiene su imagen cargada aún, inicia la descarga desde el CDN de forma asíncrona.
+
+```typescript
+// Predicado: función que determina si un badge cumple los criterios
+type Predicate = (value: Badge, index: number, obj: unknown[]) => boolean;
+
+// Estructura de un Badge
+type Badge = {
+  text: string;          // Identificador (ej: "subscriber/12")
+  image: string;         // URL de la imagen
+  description: string;   // Descripción legible
+  value: number | null;  // Valor numérico asociado
+};
+```
+
+**Ejemplos de uso:**
+
+```javascript
+// Buscar por nombre exacto
+const moderatorBadge = badges.find(b => b.text === 'moderator/1');
+
+// Buscar por patrón
+const vipBadges = badges.filter(b => b.text.startsWith('vip/'));
+
+// Buscar por valor
+const longSubscriber = badges.find(b => 
+  b.text.startsWith('subscriber/') && (b.value || 0) >= 12
+);
 ```
 
 ## 📂 Estructura del Proyecto
 
 ```
-mtmi-badges/
+mtmi-async-badges/
 ├── .github/
 │   └── workflows/
 │       └── update-badges.yml  # GitHub Action para actualización automática
 ├── badges/           # Directorio con todos los badges en formato JSON
+├── dist/             # Archivos compilados (generado por tsdown)
+├── src/
+│   └── index.ts      # Código fuente del paquete
 ├── scripts/          # Scripts de mantenimiento
 │   └── getGlobalBadges.js  # Script para actualizar badges desde la API
+├── tsconfig.json     # Configuración de TypeScript
+├── tsdown.config.ts  # Configuración de tsdown
 ├── package.json
 ├── LICENSE
 └── README.md
@@ -105,6 +170,56 @@ Para ejecutar manualmente:
 1. Ve a la pestaña "Actions" en GitHub
 2. Selecciona "Update Twitch Badges"
 3. Haz clic en "Run workflow"
+
+### 📦 Compilar el Paquete
+
+El proyecto usa [tsdown](https://tsdown.dev/) para compilar TypeScript a JavaScript con soporte para ESM y CJS:
+
+```bash
+pnpm build
+```
+
+Esto generará los archivos compilados en la carpeta `dist/`:
+- `dist/index.js` - Módulo ESM
+- `dist/index.cjs` - Módulo CommonJS
+- `dist/index.d.ts` - Definiciones de TypeScript (ESM)
+- `dist/index.d.cts` - Definiciones de TypeScript (CJS)
+- Source maps para debugging
+
+### 🚀 Publicar en NPM
+
+Antes de publicar, asegúrate de:
+
+1. **Configurar tu cuenta de npm**:
+```bash
+npm login
+```
+
+2. **Actualizar la versión** (elige una):
+```bash
+# Patch (1.0.0 -> 1.0.1) - correcciones de bugs
+pnpm version patch
+
+# Minor (1.0.0 -> 1.1.0) - nuevas características
+pnpm version minor
+
+# Major (1.0.0 -> 2.0.0) - cambios que rompen compatibilidad
+pnpm version major
+```
+
+3. **Publicar el paquete**:
+```bash
+# La compilación se ejecuta automáticamente con prepublishOnly
+pnpm publish
+
+# Para primera publicación con acceso público
+pnpm publish --access public
+```
+
+4. **Verificar la publicación**:
+```bash
+npm view mtmi-async-badges
+```
 
 ## 📊 Formato de Datos
 

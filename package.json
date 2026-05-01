@@ -1,13 +1,52 @@
 {
-  "name": "mtmi-badges",
+  "name": "mtmi-async-badges",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "update-badges": "node scripts/getGlobalBadges.js"
+  "description": "Asynchronous badge loading solution for MTMI library - Provides Twitch global badges via CDN",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
   },
-  "keywords": [],
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "update-badges": "node scripts/getGlobalBadges.js",
+    "build": "tsdown",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "twitch",
+    "badges",
+    "mtmi",
+    "async",
+    "cdn",
+    "chat"
+  ],
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisvdev/mtmi-async-badges.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chrisvdev/mtmi-async-badges/issues"
+  },
+  "homepage": "https://github.com/chrisvdev/mtmi-async-badges#readme",
+  "devDependencies": {
+    "tsdown": "^0.3.0",
+    "typescript": "^5.7.0"
+  },
   "packageManager": "pnpm@10.33.0"
 }
