@@ -53,6 +53,92 @@ console.log(subscriberBadge?.image); // URL de la imagen del badge
 // La primera llamada iniciará la descarga, las siguientes usarán la versión cacheada
 ```
 
+### Uso desde CDN (unpkg)
+
+Puedes usar el paquete directamente en el navegador sin instalación mediante [unpkg.com](https://unpkg.com):
+
+#### Módulo ESM (Navegadores Modernos)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MTMI Async Badges</title>
+</head>
+<body>
+  <script type="module">
+    // Importar desde unpkg
+    import badges from 'https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.js';
+    
+    // Usar el paquete
+    const subscriberBadge = badges.find(b => b.text === 'subscriber/12');
+    console.log(subscriberBadge);
+  </script>
+</body>
+</html>
+```
+
+#### URLs Disponibles
+
+```bash
+# Última versión (recomendado para desarrollo)
+https://unpkg.com/mtmi-async-badges/dist/index.js
+
+# Versión específica (recomendado para producción)
+https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.js
+
+# Ver todos los archivos del paquete
+https://unpkg.com/browse/mtmi-async-badges@1.0.0/
+
+# Archivos de tipos TypeScript
+https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.d.ts
+```
+
+#### Ejemplo Completo
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo MTMI Async Badges</title>
+</head>
+<body>
+  <h1>Twitch Badges</h1>
+  <div id="badges"></div>
+
+  <script type="module">
+    import badges from 'https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.js';
+    
+    // Buscar badges de subscriber
+    const subscriberBadges = badges.filter(b => 
+      b.text.startsWith('subscriber/')
+    );
+    
+    // Mostrar en el DOM
+    const container = document.getElementById('badges');
+    subscriberBadges.forEach(badge => {
+      if (badge.image) {
+        const img = document.createElement('img');
+        img.src = badge.image;
+        img.alt = badge.description;
+        img.title = badge.text;
+        container.appendChild(img);
+      }
+    });
+  </script>
+</body>
+</html>
+```
+
+#### Características
+
+- ✅ **Zero build**: No requiere empaquetador
+- ✅ **Módulos ESM**: Compatible con navegadores modernos
+- ✅ **Caché CDN**: Rápido y distribuido globalmente
+- ✅ **Versionado**: Puedes fijar versiones específicas
+- ⚠️ **Soporte de navegadores**: Requiere navegadores con soporte para ES Modules (todos los modernos)
+
 #### TypeScript
 
 El paquete incluye definiciones de tipos completas:
