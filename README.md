@@ -42,12 +42,83 @@ pnpm add mtmi-async-badges
 yarn add mtmi-async-badges
 ```
 
+#### Uso con MTMI (Recomendado)
+
+```javascript
+import badges from 'mtmi-async-badges';
+import { client } from 'mtmi';
+
+// Conectar al chat de Twitch pasando badges como opción
+client.connect({ 
+  channels: ['tu_canal'], 
+  badges,  // Los badges se cargan automáticamente de forma asíncrona
+  avatarProvider: 'decapi' 
+});
+
+// Escuchar mensajes
+client.on('message', (message) => {
+  console.log(message);
+  // Los badges ya estarán resueltos en message.badges
+});
+```
+
+### API
+
+#### Uso Principal: Integración con MTMI
+
+El caso de uso principal es pasar el objeto `badges` directamente a MTMI:
+
+```javascript
+import badges from 'mtmi-async-badges';
+import { client } from 'mtmi';
+
+client.connect({ 
+  channels: ['canal'], 
+  badges  // MTMI se encarga de todo automáticamente
+});
+```
+
+#### Tipos TypeScript
+
+```typescript
+import badges from 'mtmi-async-badges';
+import { client } from 'mtmi';
+import type ChatView from '@components/chat-view';
+
+const chatView = document.querySelector('chat-view') as ChatView;
+const channel = 'tu_canal';
+
+// Conectar con tipos completos
+client.connect({ 
+  channels: [channel], 
+  badges,
+  avatarProvider: 'decapi'
+});
+
+// Los tipos de MTMI incluyen la información de badges
+client.on('message', (message) => {
+  chatView.newMessage(message);
+});
+```
+
+#### Uso Directo (Avanzado)
+
+Si necesitas acceder directamente a los badges sin MTMI:
+
 ```javascript
 import badges from 'mtmi-async-badges';
 
-// Buscar badge por texto
+// Buscar badge específico
 const subscriberBadge = badges.find(badge => badge.text === 'subscriber/12');
 console.log(subscriberBadge?.image); // URL de la imagen del badge
+
+// Buscar por patrón
+const vipBadges = badges.filter(b => b.text.startsWith('vip/'));
+
+// Buscar por valor
+const longSubscriber = badges.find(b => 
+  b.text.startsWith('subscriber/') && (b.value || 0) >= 12
+);
 
 // Los badges se cargan de forma asíncrona desde el CDN
 // La primera llamada iniciará la descarga, las siguientes usarán la versión cacheada
@@ -104,27 +175,45 @@ https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.d.ts
   <title>Demo MTMI Async Badges</title>
 </head>
 <body>
-  <h1>Twitch Badges</h1>
-  <div id="badges"></div>
+  <h1>Twitch Chat con Badges</h1>
+  <div id="chat"></div>
 
   <script type="module">
     import badges from 'https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.js';
+    import { client } from 'https://unpkg.com/mtmi@latest/dist/index.js';
     
-    // Buscar badges de subscriber
-    const subscriberBadges = badges.filter(b => 
-      b.text.startsWith('subscriber/')
-    );
+    const chatContainer = document.getElementById('chat');
     
-    // Mostrar en el DOM
-    const container = document.getElementById('badges');
-    subscriberBadges.forEach(badge => {
-      if (badge.image) {
-        const img = document.createElement('img');
-        img.src = badge.image;
-        img.alt = badge.description;
-        img.title = badge.text;
-        container.appendChild(img);
+    // Conectar al chat de Twitch
+    client.connect({ 
+      channels: ['tu_canal'], 
+      badges,
+      avatarProvider: 'decapi'
+    });
+    
+    // Mostrar mensajes con badges
+    client.on('message', (message) => {
+      const msgDiv = document.createElement('div');
+      
+      // Renderizar badges
+      if (message.badges) {
+        message.badges.forEach(badge => {
+          const img = document.createElement('img');
+          img.src = badge.image;
+          img.alt = badge.description;
+          img.title = badge.text;
+          img.style.width = '18px';
+          img.style.marginRight = '4px';
+          msgDiv.appendChild(img);
+        });
       }
+      
+      // Añadir mensaje
+      msgDiv.appendChild(document.createTextNode(
+        `${message.username}: ${message.message}`
+      ));
+      
+      chatContainer.appendChild(msgDiv);
     });
   </script>
 </body>
@@ -137,9 +226,10 @@ https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.d.ts
 - ✅ **Módulos ESM**: Compatible con navegadores modernos
 - ✅ **Caché CDN**: Rápido y distribuido globalmente
 - ✅ **Versionado**: Puedes fijar versiones específicas
-- ⚠️ **Soporte de navegadores**: Requiere navegadores con soporte para ES Modules (todos los modernos)
+- ✅ **Integración con MTMI**: Funciona directamente con la librería MTMI
+- ⚠️ **Soporte de navegadores**: Requiere navegadores con soporte para ES Modules
 
-#### TypeScript
+### API
 
 El paquete incluye definiciones de tipos completas:
 
