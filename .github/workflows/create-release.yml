@@ -1,0 +1,95 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | grep -A1 ${GITHUB_REF#refs/tags/} | tail -n1)
+          echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -z "${{ steps.prev_tag.outputs.PREV_TAG }}" ]; then
+            # Primera release
+            CHANGELOG="## 🎉 Primera versión oficial de MTMI Async Badges"
+          else
+            # Generar changelog desde el tag anterior
+            CHANGELOG="## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}"
+            CHANGELOG="$CHANGELOG
+
+$(git log ${{ steps.prev_tag.outputs.PREV_TAG }}..HEAD --pretty=format:"- %s" --no-merges)"
+          fi
+          
+          # Agregar sección de características
+          CHANGELOG="$CHANGELOG
+
+### ✨ Características
+
+- ✅ **389 badges globales de Twitch** disponibles en formato JSON
+- ✅ **Integración con MTMI**: Pasa el objeto badges directamente al cliente
+- ✅ **Carga asíncrona**: Los badges se cargan desde el CDN cuando se necesitan
+- ✅ **TypeScript completo**: Definiciones de tipos incluidas
+- ✅ **Dual format**: ESM y CommonJS (compatible con Node.js y navegadores)
+- ✅ **Disponible via npm**: \`npm install mtmi-async-badges\`
+- ✅ **Disponible via unpkg**: Sin instalación, directo en el navegador
+- ✅ **Actualización automática**: GitHub Action que actualiza badges semanalmente
+
+### 📦 Instalación
+
+\`\`\`bash
+npm install mtmi-async-badges@${{ steps.get_version.outputs.VERSION }}
+\`\`\`
+
+### 🚀 Uso con MTMI
+
+\`\`\`javascript
+import badges from 'mtmi-async-badges';
+import { client } from 'mtmi';
+
+client.connect({ 
+  channels: ['tu_canal'], 
+  badges,
+  avatarProvider: 'decapi' 
+});
+\`\`\`
+
+### 📚 Documentación
+
+- [README completo](https://github.com/chrisvdev/mtmi-async-badges#readme)
+- [npm package](https://www.npmjs.com/package/mtmi-async-badges)
+- [unpkg CDN](https://unpkg.com/mtmi-async-badges@${{ steps.get_version.outputs.VERSION }}/dist/index.js)"
+          
+          # Guardar changelog en archivo temporal
+          echo "$CHANGELOG" > changelog.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "🎖️ v${{ steps.get_version.outputs.VERSION }}"
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

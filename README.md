@@ -290,7 +290,8 @@ mtmi-async-badges/
 │   └── workflows/
 │       ├── update-badges.yml       # Actualización automática de badges
 │       ├── publish-npm.yml         # Publicación npm por cambio de versión
-│       └── publish-npm-tag.yml     # Publicación npm por tags
+│       ├── publish-npm-tag.yml     # Publicación npm por tags
+│       └── create-release.yml      # Creación automática de GitHub Releases
 ├── badges/           # Directorio con todos los badges en formato JSON
 ├── dist/             # Archivos compilados (generado por tsdown)
 ├── src/
@@ -428,10 +429,11 @@ pnpm version major  # 1.0.0 -> 2.0.0
 # 3. Subir cambios y tags
 git push && git push --tags
 
-# 4. GitHub Action se encarga del resto:
+# 4. GitHub Actions se encargan del resto:
 #    - Instala dependencias
 #    - Compila el código
 #    - Publica en npm
+#    - Crea un release en GitHub con changelog automático
 ```
 
 #### 🔧 Publicación Manual (Opcional)
