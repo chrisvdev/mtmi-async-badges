@@ -125,11 +125,11 @@ class AsyncBadges {
   }
 
   /**
-   * Retorna la cadena "async" para identificar este objeto como AsyncBadges.
+   * Propiedad de solo lectura que retorna "async" para identificar este objeto como AsyncBadges.
    * Permite diferenciar esta implementación asíncrona de un array normal de insignias.
    * @returns La cadena "async"
    */
-  public length() {
+  public get length() {
     return "async";
   }
 }
