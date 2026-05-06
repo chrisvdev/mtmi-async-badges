@@ -13,6 +13,15 @@ Repositorio de badges globales de Twitch para usar como fuente asíncrona con la
 
 Este repositorio aloja los badges globales de Twitch en formato JSON, disponibles para descarga directa vía `raw.githubusercontent.com`. Está diseñado para ser utilizado como parche que proporciona una alternativa asíncrona para la resolución de badges en la librería MTMI.
 
+### Cómo Funciona
+
+El paquete simula ser un array pero con "magia" asíncrona:
+- Los badges se cargan **bajo demanda** desde GitHub Raw CDN (solo cuando se necesitan)
+- Primera búsqueda: Inicia fetch en background y retorna `undefined`
+- ~100ms después: Badge cargado y en caché
+- Búsquedas posteriores: Retorna inmediatamente desde cache (sin fetch)
+- MTMI detecta automáticamente este comportamiento mediante `badges.length === "async"`
+
 ### ¿Por qué este proyecto?
 
 La librería MTMI es una excelente herramienta para trabajar con el chat de Twitch, pero requiere una solución asíncrona para la carga de badges. Este repositorio proporciona:
@@ -20,7 +29,15 @@ La librería MTMI es una excelente herramienta para trabajar con el chat de Twit
 - ✅ Badges actualizados y disponibles en formato JSON
 - ✅ Acceso directo vía CDN (GitHub Raw)
 - ✅ Estructura organizada y fácil de consumir
-- ✅ Actualización automatizada mediante scripts
+- ✅ Actualización automatizada mediante scripts (GitHub Actions - cada semana)
+- ✅ Carga lazy (solo descarga badges cuando se necesitan)
+- ✅ Cache en memoria (sin refetch después de cargar)
+- ✅ Zero dependencias y solo 774 bytes (ESM minificado)
+
+### Casos de Uso Reales
+
+- **[CVTalk](https://github.com/chrisvdev/CVTalk)**: Widget para OBS Studio que muestra el chat de Twitch con badges dinámicos
+- Cualquier aplicación que use MTMI y necesite badges actualizados automáticamente
 
 ## 🚀 Uso
 
@@ -315,6 +332,8 @@ mtmi-async-badges/
 ### Instalación
 
 ```bash
+git clone https://github.com/chrisvdev/mtmi-async-badges.git
+cd mtmi-async-badges
 pnpm install
 ```
 
