@@ -139,7 +139,7 @@ Puedes usar el paquete directamente en el navegador sin instalación mediante [u
 <body>
   <script type="module">
     // Importar desde unpkg
-    import badges from 'https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.js';
+    import badges from 'https://unpkg.com/mtmi-async-badges@latest/dist/index.js';
     
     // Usar el paquete
     const subscriberBadge = badges.find(b => b.text === 'subscriber/12');
@@ -156,13 +156,13 @@ Puedes usar el paquete directamente en el navegador sin instalación mediante [u
 https://unpkg.com/mtmi-async-badges/dist/index.js
 
 # Versión específica (recomendado para producción)
-https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.js
+https://unpkg.com/mtmi-async-badges@1.0.4/dist/index.js
 
 # Ver todos los archivos del paquete
-https://unpkg.com/browse/mtmi-async-badges@1.0.0/
+https://unpkg.com/browse/mtmi-async-badges@latest/
 
 # Archivos de tipos TypeScript
-https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.d.ts
+https://unpkg.com/mtmi-async-badges@latest/dist/index.d.ts
 ```
 
 #### Ejemplo Completo
@@ -179,7 +179,7 @@ https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.d.ts
   <div id="chat"></div>
 
   <script type="module">
-    import badges from 'https://unpkg.com/mtmi-async-badges@1.0.0/dist/index.js';
+    import badges from 'https://unpkg.com/mtmi-async-badges@latest/dist/index.js';
     import { client } from 'https://unpkg.com/mtmi@latest/dist/index.js';
     
     const chatContainer = document.getElementById('chat');
@@ -369,29 +369,39 @@ Esto generará los archivos compilados en la carpeta `dist/`:
 
 El proyecto incluye publicación automática mediante GitHub Actions. Hay dos métodos:
 
-#### 🤖 Método 1: Publicación Automática (Recomendado)
+#### 📦 Publicación Automática (Recomendado)
 
-Cuando cambias la versión en `package.json` y haces push, se publica automáticamente:
+El proyecto tiene configurado GitHub Actions para publicar automáticamente cuando cambias la versión en `package.json`:
 
 ```bash
 # 1. Actualizar la versión
-pnpm version patch  # o minor/major
+pnpm version patch  # 1.0.4 -> 1.0.5
+pnpm version minor  # 1.0.4 -> 1.1.0
+pnpm version major  # 1.0.4 -> 2.0.0
 
 # 2. Push de los cambios (esto dispara la publicación automática)
 git push && git push --tags
 ```
 
-La GitHub Action detectará el cambio de versión y publicará automáticamente en npm.
+La GitHub Action:
+1. Detecta el cambio de versión
+2. Compila el paquete
+3. Publica en npm
+4. Crea un tag de Git
+5. Genera un changelog automático
+6. Crea un release en GitHub
 
-#### 🏷️ Método 2: Publicación por Tags
+#### 🏷️ Publicación por Tags
 
-Crear un tag de versión también dispara la publicación:
+También puedes publicar creando un tag de versión:
 
 ```bash
 # Crear tag y hacer push
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.5
+git push origin v1.0.5
 ```
+
+Esto también disparará el workflow de publicación y creación de release.
 
 #### ⚙️ Configuración Inicial (Una sola vez)
 

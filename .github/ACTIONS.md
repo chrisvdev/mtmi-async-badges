@@ -4,6 +4,13 @@ Este documento describe las GitHub Actions configuradas en el proyecto.
 
 ## 📋 Actions Disponibles
 
+Este proyecto tiene 4 workflows configurados:
+
+1. **Update Twitch Badges** - Actualización semanal automática de badges
+2. **Publish to NPM** - Publicación automática al cambiar versión (incluye releases)
+3. **Publish to NPM by Tag** - Publicación mediante tags
+4. **Create Release** - Creación de releases (legacy, ahora integrado en #2)
+
 ### 1. Update Twitch Badges (`update-badges.yml`)
 
 **Propósito**: Actualizar automáticamente los badges desde la API de Twitch.
@@ -25,7 +32,7 @@ Este documento describe las GitHub Actions configuradas en el proyecto.
 
 ### 2. Publish to NPM (`publish-npm.yml`)
 
-**Propósito**: Publicar automáticamente en npm cuando cambia la versión en `package.json`.
+**Propósito**: Publicar automáticamente en npm cuando cambia la versión en `package.json` y crear release en GitHub.
 
 **Disparadores**:
 - Push a la rama `main` con cambios en `package.json`
@@ -40,15 +47,21 @@ Este documento describe las GitHub Actions configuradas en el proyecto.
    - Instala dependencias
    - Compila el código con `pnpm build`
    - Publica en npm con `pnpm publish --access public`
+   - Crea un tag de Git con la versión
+   - Genera un changelog automático desde el último tag
+   - Crea un GitHub Release con documentación completa
 
 **Requisitos**:
 - Secret `NPM_TOKEN` configurado en GitHub
+- Permisos: `contents: write` (para crear tags y releases)
 
 **Ejemplo de uso**:
 ```bash
-pnpm version patch
+pnpm version patch  # 1.0.4 -> 1.0.5
 git push && git push --tags
 ```
+
+**Resultado**: Paquete publicado en npm + Release en GitHub con changelog automático
 
 ---
 
@@ -70,9 +83,33 @@ git push && git push --tags
 
 **Ejemplo de uso**:
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.5
+git push origin v1.0.5
 ```
+
+---
+
+### 4. Create Release (`create-release.yml`)
+
+**Propósito**: Crear GitHub Release cuando se crea un tag de versión (legacy - ahora integrado en `publish-npm.yml`).
+
+**Disparadores**:
+- Push de tags con formato `v*.*.*`
+
+**Proceso**:
+1. Obtiene la versión del tag
+2. Encuentra el tag anterior
+3. Genera un changelog automático con los commits entre versiones
+4. Crea un GitHub Release con:
+   - Título formateado
+   - Changelog de cambios
+   - Información de instalación y uso
+   - Enlaces a documentación
+
+**Permisos**:
+- `contents: write` (para crear releases)
+
+**Nota**: Este workflow es redundante con la nueva funcionalidad de `publish-npm.yml`, pero se mantiene como respaldo.
 
 ---
 
@@ -118,8 +155,9 @@ Ve a la pestaña **Actions** en GitHub para ver el progreso.
 ### Permisos Requeridos
 
 - **update-badges.yml**: `contents: write` (para hacer commits)
-- **publish-npm.yml**: `contents: read` (solo lectura)
+- **publish-npm.yml**: `contents: write` (para crear tags y releases)
 - **publish-npm-tag.yml**: `contents: read` (solo lectura)
+- **create-release.yml**: `contents: write` (para crear releases)
 
 ### Variables de Entorno
 
