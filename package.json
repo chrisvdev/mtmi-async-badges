@@ -1,6 +1,6 @@
 {
   "name": "mtmi-async-badges",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Asynchronous badge loading solution for MTMI library - Provides Twitch global badges via CDN",
   "type": "module",
   "main": "./dist/index.cjs",

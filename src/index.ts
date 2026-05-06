@@ -120,10 +120,18 @@ class AsyncBadges {
    */
   public find(predicate: Predicate) {
     const badge = this.badges.find(predicate);
-    if (badge && !badge.image) this.getBadge(badge); 
+    if (badge && !badge.image) this.getBadge(badge);
     return badge?.image ? badge : undefined;
   }
 
+  /**
+   * Retorna la cadena "async" para identificar este objeto como AsyncBadges.
+   * Permite diferenciar esta implementación asíncrona de un array normal de insignias.
+   * @returns La cadena "async"
+   */
+  public length() {
+    return "async";
+  }
 }
 
 /**
