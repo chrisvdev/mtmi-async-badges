@@ -9,7 +9,7 @@ on:
 
 # Permisos necesarios
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   check-version:
@@ -70,7 +70,92 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ needs.check-version.outputs.version }}" -m "Release v${{ needs.check-version.outputs.version }}"
+          git push origin "v${{ needs.check-version.outputs.version }}"
+      
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "v${{ needs.check-version.outputs.version }}" | head -n1)
+          echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREV_TAG"
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ needs.check-version.outputs.version }}"
+          
+          if [ -z "${{ steps.prev_tag.outputs.PREV_TAG }}" ]; then
+            # Primera release
+            CHANGELOG="## 🎉 Primera versión oficial de MTMI Async Badges"
+          else
+            # Generar changelog desde el tag anterior
+            CHANGELOG="## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}"
+            CHANGELOG="$CHANGELOG
+
+$(git log ${{ steps.prev_tag.outputs.PREV_TAG }}..HEAD --pretty=format:"- %s" --no-merges)"
+          fi
+          
+          # Agregar sección de características
+          CHANGELOG="$CHANGELOG
+
+### ✨ Características
+
+- ✅ **389 badges globales de Twitch** disponibles en formato JSON
+- ✅ **Integración con MTMI**: Pasa el objeto badges directamente al cliente
+- ✅ **Carga asíncrona**: Los badges se cargan desde el CDN cuando se necesitan
+- ✅ **TypeScript completo**: Definiciones de tipos incluidas
+- ✅ **Dual format**: ESM y CommonJS (compatible con Node.js y navegadores)
+- ✅ **Disponible via npm**: \`npm install mtmi-async-badges\`
+- ✅ **Disponible via unpkg**: Sin instalación, directo en el navegador
+- ✅ **Actualización automática**: GitHub Action que actualiza badges semanalmente
+
+### 📦 Instalación
+
+\`\`\`bash
+npm install mtmi-async-badges@${VERSION}
+\`\`\`
+
+### 🚀 Uso con MTMI
+
+\`\`\`javascript
+import badges from 'mtmi-async-badges';
+import { client } from 'mtmi';
+
+client.connect({ 
+  channels: ['tu_canal'], 
+  badges,
+  avatarProvider: 'decapi' 
+});
+\`\`\`
+
+### 📚 Documentación
+
+- [README completo](https://github.com/chrisvdev/mtmi-async-badges#readme)
+- [npm package](https://www.npmjs.com/package/mtmi-async-badges)
+- [unpkg CDN](https://unpkg.com/mtmi-async-badges@${VERSION}/dist/index.js)"
+          
+          # Guardar changelog en archivo
+          echo "$CHANGELOG" > changelog.md
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ needs.check-version.outputs.version }}"
+          name: "🎖️ v${{ needs.check-version.outputs.version }}"
+          body_path: changelog.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Success notification
         run: |
           echo "🎉 Successfully published version ${{ needs.check-version.outputs.version }} to npm!"
           echo "📦 Package: mtmi-async-badges@${{ needs.check-version.outputs.version }}"
+          echo "🏷️ Tag: v${{ needs.check-version.outputs.version }}"
+          echo "📝 Release created on GitHub"
