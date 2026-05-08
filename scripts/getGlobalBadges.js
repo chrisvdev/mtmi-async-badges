@@ -100,13 +100,14 @@ function transformResponse (data) {
  * 
  * @async
  * @function saveToFS
- * @param {TransformedBadge} badge - Objeto badge a guardar
+ * @param {TransformedBadge|Object} badge - Objeto badge a guardar (puede incluir propiedades adicionales)
  * @returns {Promise<void>}
  * @throws {Error} Si falla la escritura del archivo
  * 
  * @description
  * Guarda el badge en la carpeta ./badges/ con el nombre basado en su identificador.
  * Los caracteres "/" en el identificador son reemplazados por "_" para el nombre del archivo.
+ * Acepta objetos TransformedBadge estándar o variantes con propiedades adicionales.
  * 
  * @example
  * await saveToFS({ text: 'subscriber/12', image: '...', description: '...', value: 12 });
@@ -142,7 +143,7 @@ try {
     badgesList.push(badge.text);
     console.log(`✔ Saved ${badge.text} to badges/${badge.text.split("/").join("_")}.json`);
   }
-  saveToFS({ text: "list", image: "", description: "Lista de badges disponibles", value: 0, badges: badgesList });
+  await saveToFS({ text: "list", image: "", description: "Lista de badges disponibles", value: 0, badges: badgesList, date: new Date().toISOString() });
 } catch (err) {
   console.error("✖ Error:", err.message);
   process.exit(1);
