@@ -34,9 +34,8 @@ jobs:
             CHANGELOG="## 🎉 Primera versión oficial de MTMI Async Badges"
           else
             COMMITS=$(git log ${{ steps.prev_tag.outputs.PREV_TAG }}..HEAD --pretty=format:'- %s' --no-merges)
-            CHANGELOG="## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}
-
-${COMMITS}"
+            CHANGELOG="## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}"
+            CHANGELOG="${CHANGELOG}\n\n${COMMITS}"
           fi
           
           # Agregar sección de características
