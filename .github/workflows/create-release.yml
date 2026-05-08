@@ -38,7 +38,7 @@ jobs:
             CHANGELOG="## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}"
             CHANGELOG="$CHANGELOG
 
-$(git log ${{ steps.prev_tag.outputs.PREV_TAG }}..HEAD --pretty=format:"- %s" --no-merges)"
+$(git log ${{ steps.prev_tag.outputs.PREV_TAG }}..HEAD --pretty=format:'- %s' --no-merges)"
           fi
           
           # Agregar sección de características
