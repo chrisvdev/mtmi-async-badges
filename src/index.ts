@@ -30,6 +30,8 @@ export type BadgeList = {
   value: number;
   /** Array de nombres de insignias contenidas en la lista */
   badges: BadgeNames;
+  /** Fecha de creación o actualización de la lista */
+  date: string;
 }
 
 /**
@@ -47,33 +49,63 @@ export type Badges = Badge[]
 export type Predicate = (value: Badge, index: number, obj: unknown[]) => boolean;
 
 /**
+ * Estructura de datos almacenada en localStorage.
+ * Contiene las insignias cargadas y la fecha de última actualización.
+ */
+export type LocalStorageAsyncBadges = {
+  /** Array de insignias almacenadas */
+  badges: Badges;
+  /** Fecha de última actualización de las insignias */
+  lastUpdate: Date;
+}
+
+/**
  * Clase para gestionar insignias de forma asíncrona.
- * Carga las insignias desde un CDN y permite buscarlas según criterios.
+ * Carga las insignias desde un CDN, las almacena en localStorage para persistencia,
+ * y permite buscarlas según criterios mediante predicados.
  */
 class AsyncBadges {
   /** Lista de insignias cargadas */
   badges: Badges = [];
+  /** Fecha de última actualización de las insignias desde el CDN */
+  lastUpdate: Date = new Date(0);
+  /** Clave utilizada para almacenar los datos en localStorage */
+  localStorageKey = "MTMIAsyncBadges";
 
   /**
-   * Inicializa la clase y comienza la carga de nombres de insignias.
+   * Inicializa la clase cargando las insignias desde localStorage si existen,
+   * y luego actualiza la lista desde el CDN si hay una versión más reciente.
    */
   constructor() {
-    this.getBadgeNames();
+    this.loadFromLocalStorage();
+    this.updateBadges();
   }
 
   /**
-   * Obtiene la lista de nombres de insignias desde el CDN.
-   * Inicializa el array de insignias con los nombres y valores vacíos.
+   * Obtiene la lista de nombres de insignias desde el CDN y actualiza el estado local.
+   * Solo actualiza si la versión del CDN es más reciente que la última actualización local.
+   * Guarda los cambios en localStorage tras una actualización exitosa.
+   * @throws Error si la petición al CDN falla
    * @private
    */
-  private async getBadgeNames() {
-    const response = await this.fromCDN<BadgeList>("list");
-    this.badges = response.badges.map(badge => ({
-      text: badge,
-      image: "",
-      description: "",
-      value: null,
-    }));
+  private async updateBadges() {
+    try {
+      const { badges, date } = await this.fromCDN<BadgeList>("list");
+      const cdnDate = new Date(date);
+      if (this.lastUpdate < cdnDate) {
+        this.badges = badges.map(badge => ({
+          text: badge,
+          image: "",
+          description: "",
+          value: null,
+        }));
+        this.lastUpdate = cdnDate;
+        this.saveToLocalStorage();
+      }
+    } catch (error) {
+      console.error("Error updating badges:", error);
+      throw error;
+    }
   }
 
   /**
@@ -96,7 +128,8 @@ class AsyncBadges {
 
   /**
    * Obtiene los detalles completos de una insignia desde el CDN.
-   * Actualiza el objeto badge con la imagen, descripción y valor obtenidos.
+   * Actualiza el objeto badge con la imagen, descripción y valor obtenidos,
+   * y guarda los cambios en localStorage.
    * @param badge - La insignia a completar con información del CDN
    * @private
    */
@@ -106,6 +139,7 @@ class AsyncBadges {
       badge.image = cdnBadge.image;
       badge.description = cdnBadge.description;
       badge.value = cdnBadge.value;
+      this.saveToLocalStorage();
     }
     catch (error) {
       console.error(`Error fetching badge ${badge.text} from CDN:`, error);
@@ -113,10 +147,43 @@ class AsyncBadges {
   }
 
   /**
+   * Carga las insignias almacenadas en localStorage.
+   * Si no hay datos guardados, inicializa con un array vacío y fecha cero.
+   * @private
+   */
+  private loadFromLocalStorage() {
+    const data = localStorage.getItem(this.localStorageKey);
+    if (data) {
+      const parsed: LocalStorageAsyncBadges = JSON.parse(data);
+      this.badges = parsed.badges;
+      this.lastUpdate = new Date(parsed.lastUpdate ? parsed.lastUpdate : 0);
+    } else {
+      this.badges = [];
+      this.lastUpdate = new Date(0);
+    }
+  }
+
+  /**
+   * Guarda las insignias actuales en localStorage.
+   * Serializa el estado actual de badges y lastUpdate como JSON.
+   * @private
+   */
+  private saveToLocalStorage() {
+    const data: LocalStorageAsyncBadges = {
+      badges: this.badges,
+      lastUpdate: this.lastUpdate,
+    };
+    localStorage.setItem(this.localStorageKey, JSON.stringify(data));
+  }
+
+  /**
    * Busca una insignia que cumpla con el predicado especificado.
-   * Si la insignia se encuentra pero no tiene imagen cargada, inicia la carga desde el CDN.
+   * Si la insignia se encuentra pero no tiene imagen cargada, inicia la carga asíncrona desde el CDN.
    * @param predicate - Función que determina si una insignia cumple con los criterios de búsqueda
-   * @returns La insignia encontrada con imagen cargada, o undefined si no se encuentra o no tiene imagen
+   * @returns La insignia encontrada con imagen cargada, o undefined si no se encuentra o aún no tiene imagen disponible
+   * @example
+   * const badge = badges.find(b => b.text === 'subscriber/12');
+   * if (badge) console.log(badge.image);
    */
   public find(predicate: Predicate) {
     const badge = this.badges.find(predicate);
