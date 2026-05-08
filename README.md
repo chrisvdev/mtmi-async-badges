@@ -305,10 +305,8 @@ const longSubscriber = badges.find(b =>
 mtmi-async-badges/
 ├── .github/
 │   └── workflows/
-│       ├── update-badges.yml       # Actualización automática de badges
-│       ├── publish-npm.yml         # Publicación npm por cambio de versión
-│       ├── publish-npm-tag.yml     # Publicación npm por tags
-│       └── create-release.yml      # Creación automática de GitHub Releases
+│       ├── update-badges.yml       # Actualización automática de badges (semanal)
+│       └── publish-npm.yml         # Publicación manual a npm con workflow_dispatch
 ├── badges/           # Directorio con todos los badges en formato JSON
 ├── dist/             # Archivos compilados (generado por tsdown)
 ├── src/
@@ -386,41 +384,34 @@ Esto generará los archivos compilados en la carpeta `dist/`:
 
 ### 🚀 Publicar en NPM
 
-El proyecto incluye publicación automática mediante GitHub Actions. Hay dos métodos:
+El proyecto usa publicación **manual** mediante GitHub Actions para tener control total sobre cuándo se publican nuevas versiones.
 
-#### 📦 Publicación Automática (Recomendado)
-
-El proyecto tiene configurado GitHub Actions para publicar automáticamente cuando cambias la versión en `package.json`:
+#### 📦 Publicación Manual con GitHub CLI (Recomendado)
 
 ```bash
-# 1. Actualizar la versión
-pnpm version patch  # 1.0.4 -> 1.0.5
-pnpm version minor  # 1.0.4 -> 1.1.0
-pnpm version major  # 1.0.4 -> 2.0.0
-
-# 2. Push de los cambios (esto dispara la publicación automática)
-git push && git push --tags
+# Ejecutar el workflow manualmente especificando la versión
+gh workflow run publish-npm.yml -f version=1.0.5
 ```
 
-La GitHub Action:
-1. Detecta el cambio de versión
-2. Compila el paquete
-3. Publica en npm
-4. Crea un tag de Git
-5. Genera un changelog automático
-6. Crea un release en GitHub
+El workflow se encargará de:
+1. Actualizar `package.json` con la nueva versión
+2. Compilar el paquete
+3. Publicar en npm
+4. Crear el tag de Git (ej: `v1.0.5`)
+5. Generar changelog automático desde el último tag
+6. Crear un release en GitHub con el changelog
 
-#### 🏷️ Publicación por Tags
+#### 🌐 Publicación desde GitHub Web UI
 
-También puedes publicar creando un tag de versión:
+También puedes ejecutar el workflow desde la interfaz web:
 
-```bash
-# Crear tag y hacer push
-git tag v1.0.5
-git push origin v1.0.5
-```
+1. Ve a la pestaña **Actions** en GitHub
+2. Selecciona "Publish to NPM and Create Release"
+3. Haz clic en "Run workflow"
+4. Ingresa la versión (ej: `1.0.5`)
+5. Haz clic en "Run workflow"
 
-Esto también disparará el workflow de publicación y creación de release.
+El workflow se ejecutará y realizará todos los pasos automáticamente.
 
 #### ⚙️ Configuración Inicial (Una sola vez)
 
@@ -447,22 +438,20 @@ Para habilitar la publicación automática, necesitas configurar el token de npm
 # 1. Hacer cambios en el código
 git add .
 git commit -m "✨ feat: nueva característica"
+git push
 
-# 2. Actualizar versión (esto crea un commit y tag automáticamente)
-pnpm version patch  # 1.0.0 -> 1.0.1
-# o
-pnpm version minor  # 1.0.0 -> 1.1.0
-# o
-pnpm version major  # 1.0.0 -> 2.0.0
+# 2. Ejecutar workflow de publicación manualmente
+gh workflow run publish-npm.yml -f version=1.0.5
 
-# 3. Subir cambios y tags
-git push && git push --tags
-
-# 4. GitHub Actions se encargan del resto:
-#    - Instala dependencias
-#    - Compila el código
-#    - Publica en npm
-#    - Crea un release en GitHub con changelog automático
+# 3. El workflow se encarga de:
+#    - Actualizar package.json con la nueva versión
+#    - Hacer commit del cambio de versión
+#    - Instalar dependencias
+#    - Compilar el código
+#    - Publicar en npm
+#    - Crear tag de Git (v1.0.5)
+#    - Generar changelog desde el último tag
+#    - Crear un release en GitHub con el changelog
 ```
 
 #### 🔧 Publicación Manual (Opcional)
