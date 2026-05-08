@@ -15,24 +15,28 @@ Este repositorio aloja los badges globales de Twitch en formato JSON, disponible
 
 ### Cómo Funciona
 
-El paquete simula ser un array pero con "magia" asíncrona:
-- Los badges se cargan **bajo demanda** desde GitHub Raw CDN (solo cuando se necesitan)
-- Primera búsqueda: Inicia fetch en background y retorna `undefined`
-- ~100ms después: Badge cargado y en caché
-- Búsquedas posteriores: Retorna inmediatamente desde cache (sin fetch)
+El paquete simula ser un array pero con "magia" asíncrona y persistencia:
+- **Primera carga**: Recupera badges y fecha desde `localStorage` (si existen)
+- **Actualización inteligente**: Consulta CDN para verificar si hay badges más recientes
+  - Si la fecha del CDN es más nueva → actualiza todos los badges
+  - Si no hay cambios → usa los badges de `localStorage` (sin descargas)
+- **Carga bajo demanda**: Badges individuales se cargan cuando se necesitan
+- **Persistencia entre sesiones**: Los badges se mantienen en `localStorage`
+- **Cache en memoria**: Badges ya cargados se retornan inmediatamente
 - MTMI detecta automáticamente este comportamiento mediante `badges.length === "async"`
 
 ### ¿Por qué este proyecto?
 
 La librería MTMI es una excelente herramienta para trabajar con el chat de Twitch, pero requiere una solución asíncrona para la carga de badges. Este repositorio proporciona:
 
-- ✅ Badges actualizados y disponibles en formato JSON
-- ✅ Acceso directo vía CDN (GitHub Raw)
-- ✅ Estructura organizada y fácil de consumir
-- ✅ Actualización automatizada mediante scripts (GitHub Actions - cada semana)
-- ✅ Carga lazy (solo descarga badges cuando se necesitan)
-- ✅ Cache en memoria (sin refetch después de cargar)
-- ✅ Zero dependencias y solo 774 bytes (ESM minificado)
+- ✅ **Badges actualizados**: 389 badges globales en formato JSON
+- ✅ **Persistencia local**: Badges guardados en `localStorage` entre sesiones
+- ✅ **Actualizaciones inteligentes**: Solo descarga si hay cambios en el CDN
+- ✅ **CDN confiable**: Servido desde GitHub Raw (alta disponibilidad)
+- ✅ **Actualización automática**: GitHub Actions actualiza badges semanalmente
+- ✅ **Carga bajo demanda**: Badges individuales se cargan solo cuando se necesitan
+- ✅ **Zero dependencias**: Solo ~1.4 KB (ESM minificado)
+- ✅ **TypeScript completo**: Definiciones de tipos incluidas
 
 ### Casos de Uso Reales
 
