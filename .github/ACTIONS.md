@@ -4,20 +4,18 @@ Este documento describe las GitHub Actions configuradas en el proyecto.
 
 ## 📋 Actions Disponibles
 
-Este proyecto tiene 4 workflows configurados:
+Este proyecto tiene 2 workflows configurados:
 
 1. **Update Twitch Badges** - Actualización semanal automática de badges
-2. **Publish to NPM** - Publicación automática al cambiar versión (incluye releases)
-3. **Publish to NPM by Tag** - Publicación mediante tags
-4. **Create Release** - Creación de releases (legacy, ahora integrado en #2)
+2. **Publish to NPM and Create Release** - Publicación manual a npm y creación de releases
 
 ### 1. Update Twitch Badges (`update-badges.yml`)
 
 **Propósito**: Actualizar automáticamente los badges desde la API de Twitch.
 
 **Disparadores**:
-- **Programado**: Cada lunes a las 00:00 UTC
-- **Manual**: Desde la pestaña Actions en GitHub
+- **Programado**: Cada lunes a las 00:00 UTC (automático)
+- **Manual**: Desde la pestaña Actions en GitHub o vía `gh workflow run update-badges.yml`
 
 **Proceso**:
 1. Clona el repositorio
@@ -28,76 +26,107 @@ Este proyecto tiene 4 workflows configurados:
 
 **Commits generados**: `🎖️ Update Twitch badges`
 
+**Ejemplo de ejecución manual con gh CLI**:
+```bash
+gh workflow run update-badges.yml
+```
+
 ---
 
-### 2. Publish to NPM (`publish-npm.yml`)
+### 2. Publish to NPM and Create Release (`publish-npm.yml`)
 
-**Propósito**: Publicar automáticamente en npm cuando cambia la versión en `package.json` y crear release en GitHub.
+**Propósito**: Publicar manualmente una nueva versión en npm y crear un release en GitHub.
 
 **Disparadores**:
-- Push a la rama `main` con cambios en `package.json`
+- **Manual únicamente**: Desde la pestaña Actions en GitHub o vía `gh workflow run`
+
+**Inputs requeridos**:
+- `version`: Versión a publicar (ej: `1.0.5`, `1.1.0`, `2.0.0`)
 
 **Proceso**:
-1. **Job 1 - Check Version**:
-   - Verifica si la versión en `package.json` cambió
-   - Compara el commit actual con el anterior
-   - Pasa el resultado al siguiente job
-
-2. **Job 2 - Publish** (solo si cambió la versión):
-   - Instala dependencias
-   - Compila el código con `pnpm build`
-   - Publica en npm con `pnpm publish --access public`
-   - Crea un tag de Git con la versión
-   - Genera un changelog automático desde el último tag
-   - Crea un GitHub Release con documentación completa
+1. Actualiza la versión en `package.json`
+2. Hace commit del cambio de versión
+3. Instala dependencias
+4. Compila el código con `pnpm build`
+5. Publica en npm con `pnpm publish --access public`
+6. Crea un tag de Git con la versión
+7. Genera un changelog automático desde el último tag
+8. Crea un GitHub Release con documentación completa
 
 **Requisitos**:
 - Secret `NPM_TOKEN` configurado en GitHub
 - Permisos: `contents: write` (para crear tags y releases)
 
-**Ejemplo de uso**:
+**Ejemplo de uso con gh CLI**:
 ```bash
-pnpm version patch  # 1.0.4 -> 1.0.5
-git push && git push --tags
+# Publicar versión 1.0.5
+gh workflow run publish-npm.yml -f version=1.0.5
+
+# Publicar versión 1.1.0
+gh workflow run publish-npm.yml -f version=1.1.0
 ```
 
-**Resultado**: Paquete publicado en npm + Release en GitHub con changelog automático
+**Ejemplo de uso desde GitHub Web**:
+1. Ve a la pestaña **Actions**
+2. Selecciona **Publish to NPM and Create Release**
+3. Click en **Run workflow**
+4. Ingresa la versión (ej: `1.0.5`)
+5. Click en **Run workflow**
+
+**Resultado**: 
+- Paquete publicado en npm
+- Tag `v1.0.5` creado en Git
+- Release en GitHub con changelog automático
 
 ---
 
-### 3. Publish to NPM by Tag (`publish-npm-tag.yml`)
+## 🔒 Secrets Necesarios
 
-**Propósito**: Publicar en npm mediante tags de versión.
+Los siguientes secrets deben estar configurados en GitHub:
 
-**Disparadores**:
-- Push de tags con formato `v*.*.*` (ej: `v1.0.0`, `v2.3.1`)
-
-**Proceso**:
-1. Extrae la versión del tag
-2. Instala dependencias
-3. Compila el código
-4. Publica en npm
-
-**Requisitos**:
-- Secret `NPM_TOKEN` configurado en GitHub
-
-**Ejemplo de uso**:
-```bash
-git tag v1.0.5
-git push origin v1.0.5
-```
+- `NPM_TOKEN`: Token de npm con permisos de publicación
+  - Obtenerlo en: https://www.npmjs.com/settings/YOUR_USERNAME/tokens
+  - Tipo: Automation token
+  - Configurarlo en: Settings → Secrets and variables → Actions → New repository secret
 
 ---
 
-### 4. Create Release (`create-release.yml`)
+## 📝 Notas Importantes
 
-**Propósito**: Crear GitHub Release cuando se crea un tag de versión (legacy - ahora integrado en `publish-npm.yml`).
+### Flujo de Trabajo Recomendado
 
-**Disparadores**:
-- Push de tags con formato `v*.*.*`
+1. **Desarrollo normal**:
+   - Haz commits y push normalmente a `main`
+   - Los workflows NO se ejecutarán automáticamente
 
-**Proceso**:
-1. Obtiene la versión del tag
+2. **Actualización de badges** (automática):
+   - Se ejecuta cada lunes automáticamente
+   - También puedes ejecutarla manualmente cuando quieras
+
+3. **Publicar nueva versión**:
+   ```bash
+   # Opción 1: Desde CLI
+   gh workflow run publish-npm.yml -f version=1.0.5
+   
+   # Opción 2: Desde la web de GitHub
+   # Actions → Publish to NPM and Create Release → Run workflow
+   ```
+
+### Versionado Semántico
+
+Sigue [Semantic Versioning](https://semver.org/):
+- **MAJOR** (`2.0.0`): Cambios incompatibles con versiones anteriores
+- **MINOR** (`1.1.0`): Nueva funcionalidad compatible
+- **PATCH** (`1.0.1`): Correcciones de bugs
+
+### Changelog Automático
+
+El workflow genera automáticamente un changelog basado en los commits desde el último tag. Para mejores changelogs, usa commits descriptivos con prefijos:
+- `feat:` - Nueva funcionalidad
+- `fix:` - Corrección de bugs
+- `docs:` - Cambios en documentación  
+- `chore:` - Tareas de mantenimiento
+- `refactor:` - Refactorización de código
 2. Encuentra el tag anterior
 3. Genera un changelog automático con los commits entre versiones
 4. Crea un GitHub Release con:

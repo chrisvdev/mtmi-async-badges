@@ -1,52 +1,25 @@
-name: Publish to NPM
+name: Publish to NPM and Create Release
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'package.json'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.5)'
+        required: true
+        type: string
 
-# Permisos necesarios
 permissions:
   contents: write
 
 jobs:
-  check-version:
-    runs-on: ubuntu-latest
-    outputs:
-      version-changed: ${{ steps.check.outputs.changed }}
-      version: ${{ steps.package.outputs.version }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-      
-      - name: Get current version
-        id: package
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-      
-      - name: Check if version changed
-        id: check
-        run: |
-          git diff HEAD^ HEAD -- package.json > changes.txt
-          if grep -q '"version"' changes.txt; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "✅ Version changed in package.json"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No version change detected"
-          fi
-  
   publish:
-    needs: check-version
-    if: needs.check-version.outputs.version-changed == 'true'
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -58,6 +31,15 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 10
+      
+      - name: Update version in package.json
+        run: |
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
+          git push
       
       - name: Install dependencies
         run: pnpm install
@@ -72,22 +54,19 @@ jobs:
       
       - name: Create Git tag
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ needs.check-version.outputs.version }}" -m "Release v${{ needs.check-version.outputs.version }}"
-          git push origin "v${{ needs.check-version.outputs.version }}"
+          git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
+          git push origin "v${{ github.event.inputs.version }}"
       
       - name: Get previous tag
         id: prev_tag
         run: |
-          PREV_TAG=$(git tag --sort=-version:refname | grep -v "v${{ needs.check-version.outputs.version }}" | head -n1)
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "v${{ github.event.inputs.version }}" | head -n1)
           echo "PREV_TAG=$PREV_TAG" >> $GITHUB_OUTPUT
           echo "Previous tag: $PREV_TAG"
       
       - name: Generate changelog
-        id: changelog
         run: |
-          VERSION="${{ needs.check-version.outputs.version }}"
+          VERSION="${{ github.event.inputs.version }}"
           
           if [ -z "${{ steps.prev_tag.outputs.PREV_TAG }}" ]; then
             cat > changelog.md << 'EOF'
@@ -142,8 +121,8 @@ EOF
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ needs.check-version.outputs.version }}"
-          name: "🎖️ v${{ needs.check-version.outputs.version }}"
+          tag_name: "v${{ github.event.inputs.version }}"
+          name: "🎖️ v${{ github.event.inputs.version }}"
           body_path: changelog.md
           draft: false
           prerelease: false
@@ -152,7 +131,7 @@ EOF
       
       - name: Success notification
         run: |
-          echo "🎉 Successfully published version ${{ needs.check-version.outputs.version }} to npm!"
-          echo "📦 Package: mtmi-async-badges@${{ needs.check-version.outputs.version }}"
-          echo "🏷️ Tag: v${{ needs.check-version.outputs.version }}"
+          echo "🎉 Successfully published version ${{ github.event.inputs.version }} to npm!"
+          echo "📦 Package: mtmi-async-badges@${{ github.event.inputs.version }}"
+          echo "🏷️ Tag: v${{ github.event.inputs.version }}"
           echo "📝 Release created on GitHub"
