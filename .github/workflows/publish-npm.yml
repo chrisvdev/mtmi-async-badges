@@ -91,8 +91,8 @@ jobs:
           
           if [ -z "${{ steps.prev_tag.outputs.PREV_TAG }}" ]; then
             cat > changelog.md << 'EOF'
-          ## 🎉 Primera versión oficial de MTMI Async Badges
-          EOF
+## 🎉 Primera versión oficial de MTMI Async Badges
+EOF
           else
             echo "## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}" > changelog.md
             echo "" >> changelog.md
@@ -101,43 +101,43 @@ jobs:
           fi
           
           cat >> changelog.md << 'EOF'
-          
-          ### ✨ Características
-          
-          - ✅ **389 badges globales de Twitch** disponibles en formato JSON
-          - ✅ **Integración con MTMI**: Pasa el objeto badges directamente al cliente
-          - ✅ **Carga asíncrona**: Los badges se cargan desde el CDN cuando se necesitan
-          - ✅ **TypeScript completo**: Definiciones de tipos incluidas
-          - ✅ **Dual format**: ESM y CommonJS (compatible con Node.js y navegadores)
-          - ✅ **Disponible via npm**: \`npm install mtmi-async-badges\`
-          - ✅ **Disponible via unpkg**: Sin instalación, directo en el navegador
-          - ✅ **Actualización automática**: GitHub Action que actualiza badges semanalmente
-          
-          ### 📦 Instalación
-          
-          \`\`\`bash
-          npm install mtmi-async-badges@${VERSION}
-          \`\`\`
-          
-          ### 🚀 Uso con MTMI
-          
-          \`\`\`javascript
-          import badges from 'mtmi-async-badges';
-          import { client } from 'mtmi';
-          
-          client.connect({ 
-            channels: ['tu_canal'], 
-            badges,
-            avatarProvider: 'decapi' 
-          });
-          \`\`\`
-          
-          ### 📚 Documentación
-          
-          - [README completo](https://github.com/chrisvdev/mtmi-async-badges#readme)
-          - [npm package](https://www.npmjs.com/package/mtmi-async-badges)
-          - [unpkg CDN](https://unpkg.com/mtmi-async-badges@${VERSION}/dist/index.js)
-          EOF
+
+### ✨ Características
+
+- ✅ **389 badges globales de Twitch** disponibles en formato JSON
+- ✅ **Integración con MTMI**: Pasa el objeto badges directamente al cliente
+- ✅ **Carga asíncrona**: Los badges se cargan desde el CDN cuando se necesitan
+- ✅ **TypeScript completo**: Definiciones de tipos incluidas
+- ✅ **Dual format**: ESM y CommonJS (compatible con Node.js y navegadores)
+- ✅ **Disponible via npm**: \`npm install mtmi-async-badges\`
+- ✅ **Disponible via unpkg**: Sin instalación, directo en el navegador
+- ✅ **Actualización automática**: GitHub Action que actualiza badges semanalmente
+
+### 📦 Instalación
+
+\`\`\`bash
+npm install mtmi-async-badges@${VERSION}
+\`\`\`
+
+### 🚀 Uso con MTMI
+
+\`\`\`javascript
+import badges from 'mtmi-async-badges';
+import { client } from 'mtmi';
+
+client.connect({ 
+  channels: ['tu_canal'], 
+  badges,
+  avatarProvider: 'decapi' 
+});
+\`\`\`
+
+### 📚 Documentación
+
+- [README completo](https://github.com/chrisvdev/mtmi-async-badges#readme)
+- [npm package](https://www.npmjs.com/package/mtmi-async-badges)
+- [unpkg CDN](https://unpkg.com/mtmi-async-badges@${VERSION}/dist/index.js)
+EOF
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
