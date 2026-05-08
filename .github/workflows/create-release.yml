@@ -31,15 +31,12 @@ jobs:
         id: changelog
         run: |
           if [ -z "${{ steps.prev_tag.outputs.PREV_TAG }}" ]; then
-            # Primera release
             CHANGELOG="## 🎉 Primera versión oficial de MTMI Async Badges"
           else
-            # Generar changelog desde el tag anterior
-            CHANGELOG="## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}"
-            CHANGELOG="${CHANGELOG}
+            COMMITS=$(git log ${{ steps.prev_tag.outputs.PREV_TAG }}..HEAD --pretty=format:'- %s' --no-merges)
+            CHANGELOG="## 📝 Cambios desde ${{ steps.prev_tag.outputs.PREV_TAG }}
 
-"
-            CHANGELOG="${CHANGELOG}$(git log ${{ steps.prev_tag.outputs.PREV_TAG }}..HEAD --pretty=format:'- %s' --no-merges)"
+${COMMITS}"
           fi
           
           # Agregar sección de características
